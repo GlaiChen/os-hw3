@@ -15,9 +15,19 @@ The first mechanism is of KVM as despicted in slide 26: <br/><br/>
 First, it is Type II hypervisor,means it is a hosted hypervisor, which support guest virtual machines by coordinating calls for CPU, memory and other resources through the physical host's operating system. In simple words -type II runs on top of an OS. <br/>
 In our case study, the KVM has been written as linux kernel module and for linux and Intel VT-x purpose. <br/>
 They actually virtualized only the CPU and MMU, and all of the rest of resources, such as BIOS, devices, etc, have been exported to the User Space and relied on an emulator project called QEMU and used this architecture emulator to make all of the "jobs" they did not want to make inside the Kernel Space. <br/> 
+**To be Continued...**<br/>
 
-
-2. AMAL
-3. AMAL
+2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests:
+<br/>
+   a. If the guest runs out of memory and starts swapping <br/>
+   **To be Continued...**<br/>
+   b. When the host runs out of they memory, and swaps out pages that are used by the hypervisor, <br/>
+   **To be Continued...**<br/>
+3. One difference between plain virtualization and nested virtualization is that the former can leverage EPT/NPT hardware extensions, while the latter cannot do so directly <br/>
+   a. <br/>
+    **To be Continued...**<br/>
+   a. <br/>
+    **To be Continued...**<br/>
 4. The [Antfarm project](https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf) relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
- 
+ **To be Continued...**<br/>
+
