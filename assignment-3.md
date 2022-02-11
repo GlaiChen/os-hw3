@@ -2,7 +2,7 @@
 
 **Advanced Operating Systems, Term 1, 2022** <br/>
 **Updated**: Tuesday 4.1.2022 at 17:41 IDT <br/>
-**Due**: Tuesday, 25.1.2022 at 11:59pm IDT
+**Due**: Friday, 18.2.2022 at 11:59pm IDT
 
 ## Instructions
 
