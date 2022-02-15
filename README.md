@@ -61,10 +61,9 @@ The first stage was to build, step by step, a fully isolated environment for a g
 (5,6) <ins>Creating pid and mnt namespaces: </ins><br/>
    <img src="/images/10_createPidsnsAndMntns.png"> <br/><br/>
 
-### Question (a)
+### Question (a.1)
 Describe the process hierarchy produced by the sequence of commands in the "child shell" column. <br/>
-How can it be minimized, and what would the hierarchy look like?
-### Answer (a)
+### Answer (a.1)
 In the "child shell", we made a few commands in order to create the several namespaces we wanted to. <br/>
 <ins>(1) USER namespace </ins><br/>
 First, in line 3, we're creating a new usrns, with the command `unshare /bin/bash/`, which moves the bash program to a new namespace (unshares the current ones). <br/>
@@ -112,6 +111,11 @@ In the same command, we run the flag `--mount`, which was supposed to `unshare` 
 In line 54, we run the command `mount -t proc proc /proc` <br/> in order to mount the filesystem with the type (flag `-t`) of proc filesystem which is mounted at `/proc`. <br/>
 And finnaly, we run `ps` (line 55) to check which processes are running in our nested subtree. <br/>
 
+### Question (a.2)
+How can it be minimized, and what would the hierarchy look like?
+### Answer (a.2)
+The hierarchy presented in Answer (a.1) can be minimized by 
+
 ### Question (b)
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
 And what would happen if you defer lines 12-13 until a later time?
@@ -119,6 +123,9 @@ And what would happen if you defer lines 12-13 until a later time?
 ### Question (c)
 What is the purpose of line 4 and lines 9-10 (and similarly, line 27 and lines 29-30)? Why are they needed?<br/>
 ### Answer (c)
+The purpose is to send "signals" to the parent process in order to find which processes are those we are looking for.
+`$$` is a variable and represent the PID.
+As we explained the commands in Answer (a.1), in order to make that happen, we are changing the COMM value in its `/proc/$$/COMM` file, with the command `echo "my-net-ns" > /proc/$$/comm`, and when we get to the "parent shell" we can simply `grep` "my-user-ns" on the results of the `ps` command. <br/>
 ### Question (d.1)
 Describe how to undo and cleanup the commands above. (Note: there is more than one way; try to find the minimal way). <br/>
 Make sure there are no resources left dangling around.
@@ -137,4 +144,5 @@ would execute the command "ps aux" inside an isolated environment.
 ### Question (e)
 Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
 ### Answer (e)
+It DOES require root privilieges, since it is going to change network cards and to modify other processes.
 
