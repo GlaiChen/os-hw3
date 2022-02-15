@@ -41,23 +41,53 @@ In this part of the assignment, we've been sent to read and fully understand the
 The first stage was to build, step by step, a fully isolated environment for a given process, as described: <br/>
 
 (1) <ins>Creating user namespace:</ins><br/>
-   First thing we will start with the child shell:<br/><br/>
+   First thing we will start with the child shell:<br/>
    <img src="/images/1_createUsernsChild.png"> <br/><br/>
-   And now we will procceed in the parent shell:<br/><br/>
+   And now we will procceed in the parent shell:<br/>
    <img src="/images/2_createUsernsParent.png"> <br/><br/>
-   And now we will got back to the child shell:<br/><br/>
+   And now we will got back to the child shell:<br/>
    <img src="/images/3_createUsernsChild.png"> <br/><br/>
-(2,3) <ins>Creating uts and ipc namespaces; </ins><br/><br/>
-   <img src="/images/4_createUtns&IpcnsChild.png "> <br/><br/>   
-(4) <ins>Creating net namespace; </ins><br/><br/>
-   <img src="/images/5_CreateNetnsChild.png"> <br/><br/>
+(2,3) <ins>Creating uts and ipc namespaces; </ins><br/>
+   <img src="/images/4_createUtns&IpcnsChild.png "> <br/> <br/>
+(4) <ins>Creating net namespace; </ins><br/>
+   <img src="/images/5_CreateNetnsChild.png"> <br/>
    <img src="/images/6_createNetnsParent.png"> <br/><br/>
-   Now, if we type `ip link`, we will see our only 2 interfaces in the namespaces in DOWN mode:<br/><br/>
+   Now, if we type `ip link`, we will see our only 2 interfaces in the namespaces in DOWN mode:<br/>
    <img src="/images/7_ipLink.png"> <br/><br/>
-   We will change to UP mode:<br/><br/>
+   We will change to UP mode:<br/>
    <img src="/images/8_ipLink.png"> <br/><br/>
-   Last step, we will configure the ip address of device `peer0` and `ping` it with 1 ping to check it's connectivity:<br/><br/>
+   Last step, we will configure the ip address of device `peer0` and `ping` it with 1 ping to check it's connectivity:<br/>
    <img src="/images/9_ipAddAndPing.png"> <br/><br/>
-(5,6) <ins>Creating pid and mnt namespaces: </ins><br/><br/>
+(5,6) <ins>Creating pid and mnt namespaces: </ins><br/>
    <img src="/images/10_createPidsnsAndMntns.png"> <br/><br/>
+
+### Question (a)
+Describe the process hierarchy produced by the sequence of commands in the "child shell" column. <br/>
+How can it be minimized, and what would the hierarchy look like?
+### Answer (a)
+### Question (b)
+What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
+And what would happen if you defer lines 12-13 until a later time?
+### Answer (b)
+### Question (c)
+What is the purpose of line 4 and lines 9-10 (and similarly, line 27 and lines 29-30)? Why are they needed?<br/>
+### Answer (c)
+### Question (d.1)
+Describe how to undo and cleanup the commands above. (Note: there is more than one way; try to find the minimal way). <br/>
+Make sure there are no resources left dangling around.
+### Answer (d.1)
+### Question (d.2)
+Write a program that would implement the sequence above, whose usage is:
+
+    usage: isolate PROGRAM [ARGS...]
+
+For example, the command:
+
+    isolate ps aux
+
+would execute the command "ps aux" inside an isolated environment.
+### Answer (d.2)
+### Question (e)
+Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
+### Answer (e)
 
