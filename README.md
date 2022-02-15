@@ -115,6 +115,8 @@ And finnaly, we run `ps` (line 55) to check which processes are running in our n
 How can it be minimized, and what would the hierarchy look like?
 ### Answer (a.2)
 The hierarchy presented in Answer (a.1) can be minimized by merging some of the commands together, for example: <br/>
+```
+#!/bin/bash
         Parent shell                     Child shell
         -------------------------------  -----------------------------  
       1                                  # (1) create (privileged) userns
@@ -164,7 +166,7 @@ The hierarchy presented in Answer (a.1) can be minimized by merging some of the 
      53                                  $ unshare --pid --mount --fork --kill-child /bin/sh
      54                                  $ mount -t proc proc /proc
      55                                  $ ps
-
+```
 ### Question (b)
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
 And what would happen if you defer lines 12-13 until a later time?
