@@ -31,8 +31,12 @@ They actually virtualized only the CPU and MMU, and all of the rest of resources
 4. The [Antfarm project](https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf) relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
  **To be Continued...**<br/>
 
-## Group programming
-### (2) Containers and namespaces
+<hr>
+
+# Group programming
+Made in collaboration with Daniel Trugman
+## (2) Containers and namespaces
+
 In this part of the assignment, we've been sent to read and fully understand the basics of Linux namespaces, and practicly implement a simples container runtime that can spawn a command in an isolated environment. <br/>
 The first stage was to build, step by step, a fully isolated environment for a given process, as described: <br/>
 
