@@ -74,14 +74,15 @@ Then, we run `id` which represent our, UID, GID and Groups:<br/>
 ```
 uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
 ```
-The "65534" in the UID, GID and groups, represents the user `nobody`, which means that they have no mapping inside the namespace. The value for user `nobody` is UNIX standard and defined in the file `/proc/sys/kernel/overflowuid`. When we creare USER namespace, the new user has no mapping and that is the cause. <br/>
+The "65534" in the UID, GID and groups, represents the user `nobody`, which means that they have no mapping inside the namespace. The value for user `nobody` is UNIX standard and defined in the file `/proc/sys/kernel/overflowuid`. When we creare USER namespace, the new user has no mapping and that is the cause. <br/><br/>
 <ins>(2,3) UTS and IPC namespaces </ins><br/>. 
 In line 20, we create IPC namespace and UTS namespace in the same command, when we run `unshare --ipc --uts --kill-child /bin/bash`. <br/>
-Using different flags (`--ipc` or `--uts` or `-U`) only indicates which kind of namespace we would like to create by calling the `unshare` command. Same as at the USER namespace, we also use the `--kill-child` flag. <br/>
+Using different flags (`--ipc` or `--uts` or `-U`, etc) only indicates which kind of namespace we would like to create by calling the `unshare` command. Same as at the USER namespace, we also use the `--kill-child` flag. <br/>
 After we create the new HOSTNAME namespace (uts), we would like to change its name to "isolated", and we do it by running `hostname isolated`. <br/>
-Next, we run `hostname` just to check that the name of the new UTS namespace has been changed to "isolated". <br/>
+Next, we run `hostname` just to check that the name of the new UTS namespace has been changed to "isolated". <br/><br/>
 <ins>(4) NET namespace </ins><br/>
 
+<br/><br/>
 <ins>(5,6) PID and MNT namespaces </ins><br/>
 In line 53, we create PID namespace and MNT namespace in the same command.<br/>
 As we know, in Linux there is only 1 process tree, enumerating all of its running processes in the OS from 1 (which is the process `systemd()`) to n processes.
@@ -93,7 +94,7 @@ In order to make it "happen", we had to use the `--fork` flag, which forked the 
 We also run `--kill-child`, which sends the command to kill the subtree of all processes created under the forked child process, after the `unshare` will be terminated.
 In the same command, we run the flag `--mount`, which was supposed to `unshare` the mounted filesystem and create a new Mount namespace.<br/>
 In line 54, we run the command `mount -t proc proc /proc` <br/> in order to mount the filesystem with the type (flag `-t`) of proc filesystem which is mounted at `/proc`. <br/>
-And finnaly, we run `ps` (line 55) to check which processes are running in our nested subtree.
+And finnaly, we run `ps` (line 55) to check which processes are running in our nested subtree.<br/>
 ### Question (b)
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
 And what would happen if you defer lines 12-13 until a later time?
