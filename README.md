@@ -86,18 +86,19 @@ Then, in line 27 we will change again the COMM value with the command `echo "my-
 After we've created (lines 32-36) the virtual network interface pair on (veth0-peer0), turned it on and assigned an IP to the veth0 interface, and put the peer0 interface in the previously created network namespace and keep the other end in the root network namespace, it is time to configure the pair in the "child shell". <br/>
 In line 38, we first check with `ip link` what interfaces do we have in this NET namespace. <br/>
 After we see in lines 39-42 both of the interfaces (loopback and peer0) and that they are down, we run 2 commands in lines 43-44 to bring them to UP mode.
-```
+
      43                                  $ ip link set lo up
      44                                  $ ip link set peer0 up
-```
+
 Now, all we need to do is to assign an IP to `peer0` inteface with the command `ip addr add 10.11.12.14/24 dev peer0`.<br/>
 And ofcourse, we need to check that we have connection with pinging the address "10.11.12.13" (line 47). <br/>
 We can see that the ping worked :) <br/>
-```
+
+     47                                  $ ping -c 1 10.11.12.13
      48                                  PING 10.11.12.13 (10.11.12.13) 56(84) bytes of data.
      49                                  64 bytes from 10.11.12.13: icmp_seq=1 ttl=64 time=0.066 ms
-```
-<br/>
+
+
 <ins>(5,6) PID and MNT namespaces </ins><br/>
 In line 53, we create PID namespace and MNT namespace in the same command. <br/>
 As we know, in Linux there is only 1 process tree, enumerating all of its running processes in the OS from 1 (which is the process `systemd()`) to n processes.
