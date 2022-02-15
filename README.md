@@ -99,17 +99,18 @@ We can see that the ping worked :) <br/>
 ```
 <br/>
 <ins>(5,6) PID and MNT namespaces </ins><br/>
-In line 53, we create PID namespace and MNT namespace in the same command.<br/>
+In line 53, we create PID namespace and MNT namespace in the same command. <br/>
 As we know, in Linux there is only 1 process tree, enumerating all of its running processes in the OS from 1 (which is the process `systemd()`) to n processes.
-When creating a Process namespaces (PIDNS), we make nested process trees.<br/>
-We give the processes (other than systemd) the option to be the root process by moving on the top of a subtree. It means that in that tree, the process will get the PID = 1 (such as the `systemd()` in the OS). The other processes' in that nested namespace will receive their number realtively to the nested root process in that subtree.<br/>
+When creating a Process namespaces (PIDNS), we make nested process trees. <br/>
+We give the processes (other than systemd) the option to be the root process by moving on the top of a subtree. It means that in that tree, the process will get the PID = 1 (such as the `systemd()` in the OS). The other processes' in that nested namespace will receive their number realtively to the nested root process in that subtree. <br/>
 So, in the command in line 53 we used `unshare --pid --mount --fork --kill-child /bin/sh`, which means we moved the current process of `/bin/sh/` to a new set of namespace and actually unshared it from its curret one with the `unshare` syscall.<br/>
 When we used the flag `--pid`, we've set that from now on, children will have a distinct set of PID-to-process mappings from their parent. <br/>
 In order to make it "happen", we had to use the `--fork` flag, which forked the program as a child process of `unshare`rather than running it directly.<br/>
 We also run `--kill-child`, which sends the command to kill the subtree of all processes created under the forked child process, after the `unshare` will be terminated.
 In the same command, we run the flag `--mount`, which was supposed to `unshare` the mounted filesystem and create a new Mount namespace.<br/>
 In line 54, we run the command `mount -t proc proc /proc` <br/> in order to mount the filesystem with the type (flag `-t`) of proc filesystem which is mounted at `/proc`. <br/>
-And finnaly, we run `ps` (line 55) to check which processes are running in our nested subtree.<br/>
+And finnaly, we run `ps` (line 55) to check which processes are running in our nested subtree. <br/>
+
 ### Question (b)
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
 And what would happen if you defer lines 12-13 until a later time?
