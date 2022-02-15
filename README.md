@@ -36,10 +36,24 @@ They actually virtualized only the CPU and MMU, and all of the rest of resources
 In this part of the assignment, we've been sent to read and fully understand the basics of Linux namespaces, and practicly implement a simples container runtime that can spawn a command in an isolated environment. <br/>
 The first stage was to build, step by step, a fully isolated environment for a given process, as described: <br/>
 
-1. Create user namespace; remap the UIDs/GIDs in the new _userns_ <br/>
-2. Create uts namespaces; change hostname in the new _utsns_ <br/>
-3. Create ipc namespace <br/>
-4. Create net namespace; create and configure veth interface pair <br/>
-5. Create pid namespace <br/>
-6. Create mnt namespace; mount /proc inside the new _mntns_ <br/>
+(1) <ins>Creating user namespace:</ins><br/>
+   First thing we will start with the child shell:<br/><br/>
+   <img src="/images/1_createUsernsChild.png"> <br/><br/>
+   And now we will procceed in the parent shell:<br/><br/>
+   <img src="/images/2_createUsernsParent.png"> <br/><br/>
+   And now we will got back to the child shell:<br/><br/>
+   <img src="/images/3_createUsernsChild.png"> <br/><br/>
+(2,3) <ins>Creating uts and ipc namespaces; </ins><br/><br/>
+   <img src="/images/4_createUtns&IpcnsChild.png "> <br/><br/>   
+(4) <ins>Creating net namespace; </ins><br/><br/>
+   <img src="/images/5_CreateNetnsChild.png"> <br/><br/>
+   <img src="/images/6_createNetnsParent.png"> <br/><br/>
+   Now, if we type `ip link`, we will see our only 2 interfaces in the namespaces in DOWN mode:<br/><br/>
+   <img src="/images/7_ipLink.png"> <br/><br/>
+   We will change to UP mode:<br/><br/>
+   <img src="/images/8_ipLink.png"> <br/><br/>
+   Last step, we will configure the ip address of device `peer0` and `ping` it with 1 ping to check it's connectivity:<br/><br/>
+   <img src="/images/9_ipAddAndPing.png"> <br/><br/>
+(5,6) <ins>Creating pid and mnt namespaces: </ins><br/><br/>
+   <img src="/images/10_createPidsnsAndMntns.png"> <br/><br/>
 
