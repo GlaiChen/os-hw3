@@ -144,5 +144,5 @@ would execute the command "ps aux" inside an isolated environment.
 ### Question (e)
 Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
 ### Answer (e)
-It DOES require root privilieges, since it is going to change network cards and to modify other processes.
+It DOES require root privilieges, since it is going to change network interfaces and to modify other processes.
 
