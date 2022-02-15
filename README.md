@@ -67,21 +67,32 @@ How can it be minimized, and what would the hierarchy look like?
 ### Answer (a)
 In the "child shell", we made a few commands in order to create the several namespaces we wanted to. <br/>
 <ins>(1) USER namespace </ins><br/>
-
-<ins>(2,3) UTS and IPC namespaces </ins><br/>
-
+First, in line 3, we're creating a new usrns, with the command `unshare /bin/bash/`, which moves the bash program to a new namespace (unshares the current ones). <br/>
+In our case, we use the flag `-U`, which means "User", and ment to `unshare` the user namespace. In the same command, we run `--kill-child`, which means that when the `unshare` will terminate, it will have signame be sent to the forked child process. <br/>
+In line 4, we run `echo "my-user-ns" > /proc/$$/comm`, which replaces the comm value, which is the command name associated with the process of the file from "bash" to "my-user-ns". The purpose of changing the `bash`'s COMM to "mu-user-ns" is for the next step at the "parent shell", where we will `grep` the process and show that it is still appears authentically in the "parent shell".<br/>
+Then, we run `id` which represent our, UID, GID and Groups:<br/>
+```
+uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+```
+The "65534" in the UID, GID and groups, represents the user `nobody`, which means that they have no mapping inside the namespace. The value for user `nobody` is UNIX standard and defined in the file `/proc/sys/kernel/overflowuid`. When we creare USER namespace, the new user has no mapping and that is the cause. <br/>
+<ins>(2,3) UTS and IPC namespaces </ins><br/>. 
+In line 20, we create IPC namespace and UTS namespace in the same command, when we run `unshare --ipc --uts --kill-child /bin/bash`. <br/>
+Using different flags (`--ipc` or `--uts` or `-U`) only indicates which kind of namespace we would like to create by calling the `unshare` command. Same as at the USER namespace, we also use the `--kill-child` flag. <br/>
+After we create the new HOSTNAME namespace (uts), we would like to change its name to "isolated", and we do it by running `hostname isolated`. <br/>
+Next, we run `hostname` just to check that the name of the new UTS namespace has been changed to "isolated". <br/>
 <ins>(4) NET namespace </ins><br/>
 
 <ins>(5,6) PID and MNT namespaces </ins><br/>
+In line 53, we create PID namespace and MNT namespace in the same command.<br/>
 As we know, in Linux there is only 1 process tree, enumerating all of its running processes in the OS from 1 (which is the process `systemd()`) to n processes.
-When creating a Process namespaces (PIDNS), we make nested process trees.
-We give the processes (other than systemd) the option to be the root process by moving on the top of a subtree. It means that in that tree, the process will get the PID = 1 (such as the `systemd()` in the OS). The other processes' in that nested namespace will receive their number realtively to the nested root process in that subtree.
-So, in the command in line 53 we used `unshare --pid --mount --fork --kill-child /bin/sh`, which means we moved the current process of `/bin/sh/` to a new set of namespace and actually unshared it from its curret one with the `unshare` syscall.
-When we used the flag `--pid`, we've set that from now on, children will have a distinct set of PID-to-process mappings from their parent. 
-In order to make it "happen", we had to use the `--fork` flag, which forked the program as a child process of `unshare`rather than running it directly.
+When creating a Process namespaces (PIDNS), we make nested process trees.<br/>
+We give the processes (other than systemd) the option to be the root process by moving on the top of a subtree. It means that in that tree, the process will get the PID = 1 (such as the `systemd()` in the OS). The other processes' in that nested namespace will receive their number realtively to the nested root process in that subtree.<br/>
+So, in the command in line 53 we used `unshare --pid --mount --fork --kill-child /bin/sh`, which means we moved the current process of `/bin/sh/` to a new set of namespace and actually unshared it from its curret one with the `unshare` syscall.<br/>
+When we used the flag `--pid`, we've set that from now on, children will have a distinct set of PID-to-process mappings from their parent. <br/>
+In order to make it "happen", we had to use the `--fork` flag, which forked the program as a child process of `unshare`rather than running it directly.<br/>
 We also run `--kill-child`, which sends the command to kill the subtree of all processes created under the forked child process, after the `unshare` will be terminated.
 In the same command, we run the flag `--mount`, which was supposed to `unshare` the mounted filesystem and create a new Mount namespace.<br/>
-In line 54, we run the command `mount -t proc proc /proc` <br/> in order to mount the filesystem 
+In line 54, we run the command `mount -t proc proc /proc` <br/> in order to mount the filesystem with the type (flag `-t`) of proc filesystem which is mounted at `/proc`. <br/>
 And finnaly, we run `ps` (line 55) to check which processes are running in our nested subtree.
 ### Question (b)
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
