@@ -115,8 +115,7 @@ And finnaly, we run `ps` (line 55) to check which processes are running in our n
 How can it be minimized, and what would the hierarchy look like?
 ### Answer (a.2)
 The hierarchy presented in Answer (a.1) can be minimized by merging some of the commands together, for example: <br/>
-```
-#!/bin/bash
+```#!/bin/bash
         Parent shell                     Child shell
         -------------------------------  -----------------------------  
       1                                  # (1) create (privileged) userns
