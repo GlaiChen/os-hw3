@@ -69,7 +69,7 @@ In the "child shell", we made a few commands in order to create the several name
 <ins>(1) USER namespace </ins><br/>
 First, in line 3, we're creating a new usrns, with the command `unshare /bin/bash/`, which moves the bash program to a new namespace (unshares the current ones). <br/>
 In our case, we use the flag `-U`, which means "User", and ment to `unshare` the user namespace. In the same command, we run `--kill-child`, which means that when the `unshare` will terminate, it will have signame be sent to the forked child process. <br/>
-In line 4, we run `echo "my-user-ns" > /proc/$$/comm`, which replaces the comm value, which is the command name associated with the process of the file from "bash" to "my-user-ns". The purpose of changing the `bash`'s COMM to "mu-user-ns" is for the next step at the "parent shell", where we will `grep` the process and show that it is still appears authentically in the "parent shell".<br/>
+In line 4, we run `echo "my-user-ns" > /proc/$$/comm`, which replaces the comm value, which is the command name associated with the process of the file from "bash" to "my-user-ns". The purpose of changing the `bash`'s COMM to "mu-user-ns" is for the next step at the "parent shell" (line 9), where we will `grep` the process and show that it is still appears authentically in the "parent shell", and without the COMM changing it will be hard to find.<br/>
 Then, we run `id` which represent our, UID, GID and Groups:<br/>
 ```
 uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
@@ -81,8 +81,23 @@ Using different flags (`--ipc` or `--uts` or `-U`, etc) only indicates which kin
 After we create the new HOSTNAME namespace (uts), we would like to change its name to "isolated", and we do it by running `hostname isolated`. <br/>
 Next, we run `hostname` just to check that the name of the new UTS namespace has been changed to "isolated". <br/><br/>
 <ins>(4) NET namespace </ins><br/>
-
-<br/><br/>
+We start as we did in the other namespaces, and create a NET namespace whitin the command `unshare --net --kill-child /bin/bash` (line 26). <br/>
+Then, in line 27 we will change again the COMM value with the command `echo "my-net-ns" > /proc/$$/comm`. We can see the use to `grep` again the process in line 29 (at the parent shell). <br/>
+After we've created (lines 32-36) the virtual network interface pair on (veth0-peer0), turned it on and assigned an IP to the veth0 interface, and put the peer0 interface in the previously created network namespace and keep the other end in the root network namespace, it is time to configure the pair in the "child shell". <br/>
+In line 38, we first check with `ip link` what interfaces do we have in this NET namespace. <br/>
+After we see in lines 39-42 both of the interfaces (loopback and peer0) and that they are down, we run 2 commands in lines 43-44 to bring them to UP mode.
+```
+     43                                  $ ip link set lo up
+     44                                  $ ip link set peer0 up
+```
+Now, all we need to do is to assign an IP to `peer0` inteface with the command `ip addr add 10.11.12.14/24 dev peer0`.<br/>
+And ofcourse, we need to check that we have connection with pinging the address "10.11.12.13" (line 47). <br/>
+We can see that the ping worked :) <br/>
+```
+     48                                  PING 10.11.12.13 (10.11.12.13) 56(84) bytes of data.
+     49                                  64 bytes from 10.11.12.13: icmp_seq=1 ttl=64 time=0.066 ms
+```
+<br/>
 <ins>(5,6) PID and MNT namespaces </ins><br/>
 In line 53, we create PID namespace and MNT namespace in the same command.<br/>
 As we know, in Linux there is only 1 process tree, enumerating all of its running processes in the OS from 1 (which is the process `systemd()`) to n processes.
