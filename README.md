@@ -376,6 +376,18 @@ The hierarchy presented in Answer (a.1) can be minimized by merging some of the 
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
 And what would happen if you defer lines 12-13 until a later time?
 ### Answer (b)
+If we change the order of namespace creation, and run any other flag than `-U`, means we would like to create any of the other 6 kinds of namespaces (IPC, NET, UTS, MNT, PID or CGROUP), rather than USER namespace, <br/>we would receive an error of `unshare: unshare failed: Operation not permitted`. <br/>
+Only in case we create USER namespace first, we would be able to create the other namespaces. <br/>
+But, if we create USER namespace first, it won't be the only action we need to take in order to proceed creating the other namespaces - <br/>We also need to run the 2 code lines which appears in lines 12-13:
+```
+     12   $ sudo bash -c 'echo "0 1000 1000" > /proc/<pid num>/uid_map'
+     13   $ sudo bash -c 'echo "0 1000 1000" > /proc/<pid num>/gid_map'
+ ```
+When a user namespace is being created, it starts without a mapping of user IDs (UID) and group IDs (GID) to the parent user namespace. <br/>
+The mapping details of both UID and GID are located at `/proc/<pid num>/uid_map` and `/proc/<pid num>/gid_map` respectively. <br/>
+When we `cat` the file, what we see is the mapping of UIDs (or GIDs) from the usernamespace of the process pid to the user namespace of the process that opened uid_map (or gid_map). The first two numbers specify the starting user ID in each of the two user namespaces. The third number specifies the length of the mapped range. So, in lines 12-13, we are writing to those mapping files with `echo` and giving the new UID and GID the ditailes of `0 1000 1000`. <br/>
+So, when a user namespace is first created, this file is empty, and without filling it out with mapping detailes, we won't be able to create the other kinds of namespaces, and this is why we **CANNOT** defer lines 12-13, otherwise same error will be received as before (`unshare: unshare failed: Operation not permitted`) <br/>
+ 
 ### Question (c)
 What is the purpose of line 4 and lines 9-10 (and similarly, line 27 and lines 29-30)? Why are they needed?<br/>
 ### Answer (c)
