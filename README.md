@@ -386,9 +386,9 @@ As we explained the commands in Answer (a.1), in order to make that happen, we a
 Describe how to undo and cleanup the commands above. (Note: there is more than one way; try to find the minimal way). <br/>
 Make sure there are no resources left dangling around.
 ### Answer (d.1)
-The minimal and simpliest way is just to `exit()` (or just press `ctrl` + `c`) in both shells. <br/>
+The minimal and simpliest way is just to run `exit` in both shells. <br/>
 The only thing that can be left dangling around is the network configurations in the "parent shell", and those can be undo by just running `ip link delete dev veth0` in the "parent shell". <br/>
-Of course, we should undo first the network configuration and then `exit()` from all the shells. <br/><br/>
+Of course, we should undo first the network configuration and then `exit` from all the shells. <br/><br/>
 ### Question (d.2)
 Write a program that would implement the sequence above, whose usage is:
 
