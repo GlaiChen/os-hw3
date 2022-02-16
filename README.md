@@ -10,15 +10,15 @@ This program is only the invidual part, and the group part will appear at //%%%%
 ## Invidual Part - Kernel Virtual Machine
 In several lectures in the course, we have learned about virtualization from most of its aspects. <br/>
 1. In Lecture #9, we've been shown by Dr. Laadan 2 mechanisms (you can find it [here](https://github.com/GlaiChen/os-hw3/blob/main/AOS-2022-L09.pdf), at slides 26 && 27). <br/>
-(1.1) The first mechanism is of KVM as despicted in slide 26: <br/><br/>
+(1.1) The first mechanism is of KVM as despicted in slide 26: <br/>
 <img src="/images/slide_26.jpg"> <br/><br/>
 First, it is Type II hypervisor,means it is a hosted hypervisor, which support guest virtual machines by coordinating calls for CPU, memory and other resources through the host's resources. In simple words -type II runs on top of an OS. <br/>
 In our case study, the KVM has been written as linux kernel module and for linux and Intel VT-x purpose and relies on QEMU. <br/>
 They actually virtualized only the CPU and/or MMU, and all of the rest of resources, such as BIOS, devices, etc, have been exported to the User Space and relied on an emulator project called QEMU and used this architecture emulator to make all of the "jobs" they did not want to make inside the Kernel Space. <br/> 
 In fact, the architecture of that mechanism is based on 3 layers - User mode, Kernel mode and Non root, which is the guest. Both User and Kernel modes are rooted.
-First thing first, the user mode process (QEMU) start with ending a syscall() to the kernel module, which initate the guest enviorment (allocates memory, loads the BIOS, creates a device, etc),  and then eneters the guest context.
-Once in the guest context, the BIOS start to run. As long as there's no traps, everything continues within the guest context. Once a trap occurs, the kernel module receives it. If it is something that the kernel "knows" how to handle by itself - it simply does that, and returns control back to the guest. Otherwise, the kernel module needs the QEMU's help. In that case, he returns the syscall to the user-root process with the return value holding all the information relevant for the qemu's work. The QEMU then does whatever he needs to do, and stores all the relevant data. It then triggers again the syscall, after completing everything it needed to do, and sending all relevant data. The Kernel module takes the QEMU's data (alongside with possibly things that it also needed to do) and gives back control to the guest. Basically, in this point the Kernel module and the QEMU did everything they were required by the non-root's trap (BIOS trap). This procedure carries on throughout all the guest execution time. <br/>
-(1.2) The second mechanism is of KVM as despicted in slide 27: <br/><br/>
+First thing first, the user mode process (QEMU) start with ending a syscall to the kernel module, which initate the guest enviorment (allocates memory, loads the BIOS, creates a device, etc),  and then eneters the guest context. <br/>
+Once in the guest context, the BIOS start to run. As long as there's no traps, everything continues within the guest context. Once a trap occurs, the kernel module receives it. If it is something that the kernel "knows" how to handle by itself - it simply does that, and returns control back to the guest. Otherwise, the kernel module needs the QEMU's help. In that case, he returns the syscall to the user-root process with the return value holding all the information relevant for the qemu's work. The QEMU then does whatever he needs to do, and stores all the relevant data. It then triggers again the syscall, after completing everything it needed to do, and sending all relevant data. The Kernel module takes the QEMU's data (alongside with possibly things that it also needed to do) and gives back control to the guest. Basically, in this point the Kernel module and the QEMU did everything they were required by the non-root's trap (BIOS trap). This procedure carries on throughout all the guest execution time. <br/><br/>
+(1.2) The second mechanism is of KVM as despicted in slide 27: <br/>
 <img src="/images/slide_27.jpg"> <br/><br/>
 2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests:
 <br/>
@@ -45,22 +45,22 @@ The first stage was to build, step by step, a fully isolated environment for a g
 
 (1) <ins>Creating user namespace:</ins><br/>
    First thing we will start with the child shell:<br/>
-   <img src="/images/1_createUsernsChild.png"> <br/><br/>
+   <img src="/images/01_createUsernsChild.png"> <br/><br/>
    And now we will procceed in the parent shell:<br/>
-   <img src="/images/2_createUsernsParent.png"> <br/><br/>
+   <img src="/images/02_createUsernsParent.png"> <br/><br/>
    And now we will got back to the child shell:<br/>
-   <img src="/images/3_createUsernsChild.png"> <br/><br/>
+   <img src="/images/03_createUsernsChild.png"> <br/><br/>
 (2,3) <ins>Creating uts and ipc namespaces; </ins><br/>
-   <img src="/images/4_createUtns&IpcnsChild.png "> <br/> <br/>
+   <img src="/images/04_createUtns&IpcnsChild.png "> <br/> <br/>
 (4) <ins>Creating net namespace; </ins><br/>
-   <img src="/images/5_createNetnsChild.png"> <br/>
-   <img src="/images/6_createNetnsParent.png"> <br/><br/>
+   <img src="/images/05_createNetnsChild.png"> <br/>
+   <img src="/images/06_createNetnsParent.png"> <br/><br/>
    Now, if we type `ip link`, we will see our only 2 interfaces in the namespaces in DOWN mode:<br/>
-   <img src="/images/7_ipLink.png"> <br/><br/>
+   <img src="/images/07_ipLink.png"> <br/><br/>
    We will change to UP mode:<br/>
-   <img src="/images/8_ipLink.png"> <br/><br/>
+   <img src="/images/08_ipLink.png"> <br/><br/>
    Last step, we will configure the ip address of device `peer0` and `ping` it with 1 ping to check it's connectivity:<br/>
-   <img src="/images/9_ipAddAndPing.png"> <br/><br/>
+   <img src="/images/09_ipAddAndPing.png"> <br/><br/>
 (5,6) <ins>Creating pid and mnt namespaces: </ins><br/>
    <img src="/images/10_createPidsnsAndMntns.png"> <br/><br/>
 
