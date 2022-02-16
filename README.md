@@ -327,50 +327,43 @@ The hierarchy presented in Answer (a.1) can be minimized by merging some of the 
       1                                  # (1) create (privileged) userns
       2   
       3                                  $ unshare -U --kill-child /bin/bash
-      4                                  $ echo "my-user-ns" > /proc/$$/comm
-      5                                  $ id
-      6                                  uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+      4                                  $ echo "my-user-ns" > /proc/$$/comm && id
+      5                                  uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+      6   
       7   
-      8   
-      9   $ ps -e -o pid,comm | grep my-user-ns
-     10   22310,my-user-ns?
-     11   
-     12   $ sudo bash -c 'echo "0 1000 1000" > /proc/22310/uid_map' && sudo bash -c 'echo "0 1000 1000" > /proc/22310/gid_map'
-     15                                  $ id
-     16                                  uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
-     17                                  
-     18                                  # (2,3,4) create utsns, ipcns and netns
-     19   
-     20                                  $ unshare --ipc --uts --net --kill-child /bin/bash
-     21                                  $ hostname isolated
-     22                                  $ hostname
-     23                                  isolated  
-     27                                  $ echo "my-net-ns" > /proc/$$/comm
-     28   
-     29   $ ps -e -o pid,comm | grep my-user-ns
-     30   22331,my-net-ns?
-     31   
-     32   $ sudo ip link add veth0 type veth peer name peer0
-     33   $ sudo ip link set veth0 up
-     34   $ sudo ip addr add 10.11.12.13/24 dev veth0
-     35   
-     36   $ sudo ip link set peer0 netns /proc/22331/ns/net
-     37   
-     38                                  $ ip link
-     39                                  1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
-     40                                      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-     41                                  9: peer0@if10: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
-     42                                      link/ether 76:8d:bb:61:1b:f5 brd ff:ff:ff:ff:ff:ff link-netnsid 0
-     43                                  $ ip link set lo up && ip link set peer0 up
-     45                                  $ ip addr add 10.11.12.14/24 dev peer0
-     47                                  $ ping -c 1 10.11.12.13
-     48                                  PING 10.11.12.13 (10.11.12.13) 56(84) bytes of data.
-     49                                  64 bytes from 10.11.12.13: icmp_seq=1 ttl=64 time=0.066 ms
-     50   
-     52                                  # (5,6) create pidns, mntns
-     53                                  $ unshare --pid --mount --fork --kill-child /bin/sh
-     54                                  $ mount -t proc proc /proc
-     55                                  $ ps
+      8   $ ps -e -o pid,comm | grep my-user-ns
+      9  22310,my-user-ns?
+     10   
+     11   $ sudo bash -c 'echo "0 1000 1000" > /proc/22310/uid_map' && sudo bash -c 'echo "0 1000 1000" > /proc/22310/gid_map'
+     12
+     13                                  $ id
+     14                                  uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
+     15                                  
+     16                                  # (2,3,4) create utsns, ipcns and netns
+     17   
+     18                                  $ unshare --ipc --uts --net --kill-child /bin/bash
+     19                                  $ hostname isolated && hostname
+     20                                  isolated  
+     21   
+     22   $ sudo ip link add veth0 type veth peer name peer0 && sudo ip link set veth0 up && sudo ip addr add 10.11.12.13/24 dev veth0
+     23   
+     24   $ sudo ip link set peer0 netns /proc/22331/ns/net
+     25   
+     26                                  $ ip link
+     27                                  1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+     28                                      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+     29                                  9: peer0@if10: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+     30                                      link/ether 76:8d:bb:61:1b:f5 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+     31                                  $ ip link set lo up && ip link set peer0 up
+     32                                  $ ip addr add 10.11.12.14/24 dev peer0
+     33                                  $ ping -c 1 10.11.12.13
+     34                                  PING 10.11.12.13 (10.11.12.13) 56(84) bytes of data.
+     35                                  64 bytes from 10.11.12.13: icmp_seq=1 ttl=64 time=0.066 ms
+     36   
+     37                                  # (5,6) create pidns, mntns
+     38                                  $ unshare --pid --mount --fork --kill-child /bin/sh
+     39                                  $ mount -t proc proc /proc
+     40                                  $ ps
 ```
 ### Question (b)
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
