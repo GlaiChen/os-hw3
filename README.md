@@ -20,6 +20,8 @@ First thing first, the user mode process (QEMU) start with ending a syscall to t
 Once in the guest context, the BIOS start to run. As long as there's no traps, everything continues within the guest context. Once a trap occurs, the kernel module receives it. If it is something that the kernel "knows" how to handle by itself - it simply does that, and returns control back to the guest. Otherwise, the kernel module needs the QEMU's help. In that case, he returns the syscall to the user-root process with the return value holding all the information relevant for the qemu's work. The QEMU then does whatever he needs to do, and stores all the relevant data. It then triggers again the syscall, after completing everything it needed to do, and sending all relevant data. The Kernel module takes the QEMU's data (alongside with possibly things that it also needed to do) and gives back control to the guest. Basically, in this point the Kernel module and the QEMU did everything they were required by the non-root's trap (BIOS trap). This procedure carries on throughout all the guest execution time. <br/><br/>
 (1.2) The second mechanism is of KVM as despicted in slide 27: <br/>
 <img src="/images/slide_27.jpg"> <br/><br/>
+So, once VMEXIT# occoured, we moved out from the guest mode (non root) to the user mode (root).
+For this "movement", need to apply one of the exit conditions, which can be varry
 2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests:
 <br/>
    a. If the guest runs out of memory and starts swapping <br/>
@@ -31,7 +33,7 @@ Once in the guest context, the BIOS start to run. As long as there's no traps, e
     **To be Continued...**<br/>
    a. <br/>
     **To be Continued...**<br/>
-4. The [Antfarm project](https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf) relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
+4. The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm project</a> relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
  **To be Continued...**<br/>
 
 <hr>
@@ -197,6 +199,7 @@ For example, the command:
 
 would execute the command "ps aux" inside an isolated environment.
 ### Answer (d.2)
+Implemented. See code at [isolate.c](/isolate.c)
 ### Question (e)
 Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
 ### Answer (e)
