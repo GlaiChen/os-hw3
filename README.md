@@ -5,7 +5,7 @@
 
 This program is a part of our 3rd and last assignment. <br/>
 Check out [os-hw3/assignment-3.md](https://github.com/GlaiChen/os-hw3/blob/main/assignment-3.md) for full details of the assignment. <br/>
-This program is only the invidual part, and the group part will appear at //%%%%// from our repo at the following link: <br/>https://github.com/academy-dt/adv-os-linux/tree/ex3 <br/>
+The group part will also appear at our group repo at the following link: <br/>https://github.com/academy-dt/kvm-hello-world<br/>
 
 ## Invidual Part - Kernel Virtual Machine
 In several lectures in the course, we have learned about virtualization from most of its aspects. <br/>
@@ -24,7 +24,7 @@ So, once VMEXIT# occoured, we moved out from the guest mode (non root) to the us
 For this "movement", need to apply one of the exit conditions, which can be varry
 2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests:
 <br/>
-   a. If the guest runs out of memory and starts swapping <br/>
+   a. If the guest runs out of memory and starts swapping, the guest would like to call the disk. In that case, the hypervisor will receive that call, execute it and receive the answer. When it will be received, the hypervisor will move it back to the guest and the memory would be swaped. <br/>
    **To be Continued...**<br/>
    b. When the host runs out of they memory, and swaps out pages that are used by the hypervisor, <br/>
    **To be Continued...**<br/>
@@ -40,6 +40,207 @@ For this "movement", need to apply one of the exit conditions, which can be varr
 
 # Group programming
 Made in collaboration with Daniel Trugman
+
+## (1) KVM: hypervisor, guest(s), and hypercalls
+
+### Question a.1
+
+What is the size of the guest (physical) memory? How and where in the
+code does the hypervisor allocate it? At what host (virtual) address is this
+memory mapped?
+
+### Answer a.1
+
+As we can see in the `main` function, we call `vm_init` with `mem_size = 0x200000`. That means we allocate 2MB of memory space.
+The actual allocation happens at `vm->mem = mmap(NULL, mem_size, ...)` where we ask the OS to give up a memory mapping of that size.
+The `mmap` call returns the virtual address of this memory space from the host's perspective.
+
+### Question a.2
+
+Besides the guest memory, what additional memory is allocated? What is
+stored in that memory? Where in the code is this memory allocated? At what
+host/guest? (virtual/physical?) address is it located?
+
+### Answer a.2
+
+The `vcpu_init` method allocates an additional control block for the vCPU.
+It first asks the KVM how big that structure is by calling `vcpu_mmap_size = ioctl(vm->sys_fd, KVM_GET_VCPU_MMAP_SIZE, 0)`,
+and then allocates the memory at `vcpu->kvm_run = mmap(NULL, vcpu_mmap_size, ...)`.
+Once again, the memory is allocated on the host, and the virtual address is stored in `vcpu->kvm_run`.
+Later on, from inside `run_vm` we access this structure for information about the guest, such as the vmexit reason, IO info, etc.
+
+The hypervisor then formats the guest memory and registers, to prepare for its
+execution. (From here on, assume _"long"_ mode).
+
+### Question a.3
+
+The guest memory area is setup to contain the guest code, the guest page
+table, and a stack. For each of these, identify where in the code it is setup,
+and the address range it occupies (both guest-physical and host-virtual).
+
+### Answer a.3
+
+Inside `setup_long_mode` we can see the setup of the page tables.
+We setup:
+- PML4 at offset 0x2000
+- PDPT at offset 0x3000
+- PD at offset 0x4000
+All relative to the beginning of the address space.
+Meaning PML4 is at guest-physical address 0x2000 and host virtual address of `vm->mem + 0x2000`.
+
+The stack is "allocated" at line 428: `regs.rsp = 2 << 20`.
+Basically, `2 << 20` is the same value as `0x200000`, so we set the stack to be at the top of the address space.
+In the guest-physical address, it will start at `0x200000` and grow down towards `0x0`.
+In the host-virtual, it will start at `vm->mem + 0x200000` and grow down towards `vm->mem`.
+
+The guest code segment is set up inside `setup_64bit_code_segment`.
+We can see that the base of the segment is at address `0x0` (i.e `vm->mem` in host-virtual).
+The actual copy of the copy into the guest's VM is at line 435: `memcpy(vm->mem, guest64, ...)`.
+The guest code is exported as a extern byte array from the compile `guest.c` code.
+
+```
+0x000000 ---------------------------    --+
+         Guest code                       |
+0x001000 ---------------------------      |
+         Nothing                          |
+0x002000 ---------------------------      |
+         PML4                             |
+0x003000 ---------------------------      |
+         PDPT                             |
+0x004000 ---------------------------      +--- Single, 2MB page
+         PD                               |
+0x005000 ---------------------------      |
+    .                                     |
+    .      ^                              |
+    .      |                              |
+    .      |                              |
+    .    STACK                            |
+0x200000 ---------------------------    --+
+```
+
+### Question a.4
+
+Examine the guest page table. How many levels does it have? How many
+pages does it occupy? Describe the guest virtual-to-physical mappings: what
+part(s) of the guest virtual address space is mapped, and to where?
+
+### Answer a.4
+
+The page table has 3 levels, each level occupies a single 4K memory region.
+There is a single page mapped into the virtual address space, and that's a single 2M (PDE64_PS) page
+that maps the entire memory space we allocated for this VM.
+
+```
+CR3 = 0x2000
+         |
+   +-----+
+   |
+   v
+             PML4:
+0x2000 ----> Entry | Where  | Bits
+             ------+--------+----------------------------
+             0     | 0x3000 | PRESENT, RW, USER
+                        |
+   +--------------------+
+   |
+   v
+             PDPT:
+0x3000 ----> Entry | Where  | Bits
+             ------+--------+----------------------------
+             0     | 0x4000 | PRESENT, RW, USER
+                        |
+   +--------------------+
+   |
+   v
+             PDPT:
+0x4000 ----> Entry | Where  | Bits
+             ------+--------+----------------------------
+             0     | 0x0    | PRESENT, RW, USER, PDE64_PS
+
+```
+
+For both (a.3) and (a.4), illustrate/visualize the hypervisor memory layout
+and the guest page table structure and address translation. (Preferably in
+text form).
+
+### Question a.5
+
+At what (guest virtual) address does the guest start execution? Where is
+this address configured?
+
+### Answer a.5
+
+The guest starts execution at address 0, exactly where we placed our code.
+We set the instruction pointer at line 426: `regs.rip = 0`.
+
+Next, the hypervisor proceeds to run the guest. For simplicity, the guest code
+(in _guest.c_) is very basic: one executable, a simple page table and a stack
+(no switching). It prints "Hello, world!" using the `outb` instruction (writes
+a byte to an IO port) which is a protected instruction that causes the guest to
+exit to the hypervisor, which in turn prints the character.
+
+(Notice how the `outb` instruction is embedded as assembly inside the guest's
+C code; See [here](https://wiki.osdev.org/Inline_Assembly) for details on how
+inline assembly works).
+
+After the guest exits, the hypervisor regains control and checks the reason for
+the exit to handle it accordingly.
+
+### Question a.6
+
+What port number does the guest use? How can the hypervisor know the port
+number, and read the value written? Which memory buffer is used for this value?
+How many exits occur during this print?
+
+### Answer a.6
+
+The guest uses port number `0xE9`.
+This value is hardcoded into both applications, and when there's a vmexit, and the reason is `KVM_EXIT_IO` the host checks the conditions:
+`if (vcpu->kvm_run->io.direction == KVM_EXIT_IO_OUT && vcpu->kvm_run->io.port == 0xE9) {`
+And if they match the expected output, we print `vcpu->kvm_run->io.size` bytes stored at `vcpu->kvm_run->io.data_offset`.
+Both of which are set by the `outb` command.
+
+Finally, the guest writes the number 42 to memory and EAX register, and then
+executes the `hlt` instruction.
+
+### Question a.7
+
+At what guest virtual (and physical?) address is the number 42 written?
+And how (and where) does the hypervisor read it?
+
+### Answer a.7
+
+The number is written both to address `0x400` and to `rax`.
+Once using: `*(long *)0x400 = 42` and once as an argument to the `hlt` inline assemblyl command.
+When the hypervisor sess the `KVM_EXIT_HLT` reason, it first checks the `rax` value,
+and then reads from the `0x400` address using: `memcpy(&memval, &vm->mem[0x400], sz);`
+
+**(b) Extend with new hypercalls**
+
+Implemented. See code at commit [e10baf28b1c1817d426acf61b00d4da75b38ae54](https://github.com/academy-dt/kvm-hello-world/commit/e10baf28b1c1817d426acf61b00d4da75b38ae54)
+
+**(c) Filesystem para-virtualization**
+
+Implemented. See code at commit [e10baf28b1c1817d426acf61b00d4da75b38ae54](https://github.com/academy-dt/kvm-hello-world/commit/e10baf28b1c1817d426acf61b00d4da75b38ae54)
+
+**(d) Bonus: hypercall in KVM**
+
+Not implemented
+
+**(e) Multiple vCPUs**
+
+Implemented e.1 using actual code, including:
+- Virtual memory changes.
+- Creating additional VCPUs.
+- Fixed virtual memory base address propagation to all functions.
+- Fixed RIP/RSP and segment definitions.
+- Running everything from dedicated threads.
+- Per-CPU members for all hypercalls.
+- Easy configuration for more than 2 CPUs
+
+But still, something doesn't work, and we don't know what.
+Guest exists with SHUTDOWN the moment we call VMENTER for the second VCPU.
+
 ## (2) Containers and namespaces
 
 In this part of the assignment, we've been sent to read and fully understand the basics of Linux namespaces, and practicly implement a simples container runtime that can spawn a command in an isolated environment. <br/>
@@ -199,7 +400,7 @@ For example, the command:
 
 would execute the command "ps aux" inside an isolated environment.
 ### Answer (d.2)
-Implemented. See code at [isolate.c](/isolate.c)
+Implemented. See code at [isolate.c](/isolate.c).
 ### Question (e)
 Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
 ### Answer (e)
