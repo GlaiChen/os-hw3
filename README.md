@@ -20,8 +20,9 @@ First thing first, the user mode process (QEMU) start with ending a syscall to t
 Once in the guest context, the BIOS start to run. As long as there's no traps, everything continues within the guest context. Once a trap occurs, the kernel module receives it. If it is something that the kernel "knows" how to handle by itself - it simply does that, and returns control back to the guest. Otherwise, the kernel module needs the QEMU's help. In that case, he returns the syscall to the user-root process with the return value holding all the information relevant for the qemu's work. The QEMU then does whatever he needs to do, and stores all the relevant data. It then triggers again the syscall, after completing everything it needed to do, and sending all relevant data. The Kernel module takes the QEMU's data (alongside with possibly things that it also needed to do) and gives back control to the guest. Basically, in this point the Kernel module and the QEMU did everything they were required by the non-root's trap (BIOS trap). This procedure carries on throughout all the guest execution time. <br/><br/>
 (1.2) The second mechanism is of KVM as despicted in slide 27: <br/>
 <img src="/images/slide_27.jpg"> <br/><br/>
-So, once VMEXIT# occoured, we moved out from the guest mode (non root) to the user mode (root).
-For this "movement", need to apply one of the exit conditions, which can be varry
+Once VMEXIT# occurred, we moved out from the guest mode (non root) to the hypervisor.
+For this "movement" to occur, it has to be applied one of the "exit conditions", which can be due to vary options and errors, such as dividing by zero, page faults, etc.
+In that situation, the hypervisor, according to the specific "exit condition" that has been occurred, send it to an other handler.
 2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests: <br/>
    (a) If the guest runs out of memory and starts swapping, the guest would like to call the disk. In that case, the hypervisor will receive that call, execute it and receive the answer. When it will be received, the hypervisor will move it back to the guest and the memory would be swaped. <br/>
    **To be Continued...** <br/>
