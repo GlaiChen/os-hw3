@@ -22,18 +22,17 @@ Once in the guest context, the BIOS start to run. As long as there's no traps, e
 <img src="/images/slide_27.jpg"> <br/><br/>
 So, once VMEXIT# occoured, we moved out from the guest mode (non root) to the user mode (root).
 For this "movement", need to apply one of the exit conditions, which can be varry
-2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests:
-<br/>
-   a. If the guest runs out of memory and starts swapping, the guest would like to call the disk. In that case, the hypervisor will receive that call, execute it and receive the answer. When it will be received, the hypervisor will move it back to the guest and the memory would be swaped. <br/>
-   **To be Continued...**<br/>
-   b. When the host runs out of they memory, and swaps out pages that are used by the hypervisor, <br/>
-   **To be Continued...**<br/>
+2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests: <br/>
+   (a) If the guest runs out of memory and starts swapping, the guest would like to call the disk. In that case, the hypervisor will receive that call, execute it and receive the answer. When it will be received, the hypervisor will move it back to the guest and the memory would be swaped. <br/>
+   **To be Continued...** <br/>
+   (b) When the host runs out of they memory, and swaps out pages that are used by the hypervisor, <br/>
+   **To be Continued...** <br/>
 3. One difference between plain virtualization and nested virtualization is that the former can leverage EPT/NPT hardware extensions, while the latter cannot do so directly <br/>
-   a. <br/>
+   (a). <br/>
     **To be Continued...**<br/>
-   a. <br/>
+   (b). <br/>
     **To be Continued...**<br/>
-4. The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm project</a> relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
+ 4. The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm project</a> relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
  **To be Continued...**<br/>
 
 <hr>
@@ -409,5 +408,4 @@ Implemented. See code at [isolate.c](/isolate.c).
 ### Question (e)
 Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
 ### Answer (e)
-It DOES require root privilieges, since it is going to change network interfaces and to modify other processes.
-
+?
