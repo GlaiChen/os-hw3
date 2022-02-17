@@ -246,154 +246,133 @@ Guest exists with SHUTDOWN the moment we call VMENTER for the second VCPU.
 In this part of the assignment, we've been sent to read and fully understand the basics of Linux namespaces, and practicly implement a simples container runtime that can spawn a command in an isolated environment. <br/>
 The first stage was to build, step by step, a fully isolated environment for a given process, as described: <br/>
 
-(1) <ins>Creating user namespace:</ins><br/>
-   First thing we will start with the child shell:<br/>
-   <img src="/images/01_createUsernsChild.png"> <br/><br/>
-   And now we will procceed in the parent shell:<br/>
-   <img src="/images/02_createUsernsParent.png"> <br/><br/>
-   And now we will got back to the child shell:<br/>
-   <img src="/images/03_createUsernsChild.png"> <br/><br/>
-(2,3) <ins>Creating uts and ipc namespaces; </ins><br/>
-   <img src="/images/04_createUtns&IpcnsChild.png "> <br/> <br/>
-(4) <ins>Creating net namespace; </ins><br/>
-   <img src="/images/05_createNetnsChild.png"> <br/>
-   <img src="/images/06_createNetnsParent.png"> <br/><br/>
-   Now, if we type `ip link`, we will see our only 2 interfaces in the namespaces in DOWN mode:<br/>
-   <img src="/images/07_ipLink.png"> <br/><br/>
-   We will change to UP mode:<br/>
-   <img src="/images/08_ipLink.png"> <br/><br/>
-   Last step, we will configure the ip address of device `peer0` and `ping` it with 1 ping to check it's connectivity:<br/>
-   <img src="/images/09_ipAddAndPing.png"> <br/><br/>
-(5,6) <ins>Creating pid and mnt namespaces: </ins><br/>
-   <img src="/images/10_createPidsnsAndMntns.png"> <br/><br/>
+(1) Creating user namespace:
+
+First thing we will start with the child shell:
+
+<img src="/images/01_createUsernsChild.png">
+
+And now we will procceed in the parent shell:
+
+<img src="/images/02_createUsernsParent.png">
+
+And now we will got back to the child shell:
+
+<img src="/images/03_createUsernsChild.png">
+
+(2,3) Creating uts and ipc namespaces:
+
+<img src="/images/04_createUtns&IpcnsChild.png">
+
+(4) Creating net namespace:
+
+<img src="/images/05_createNetnsChild.png">
+
+<img src="/images/06_createNetnsParent.png">
+
+Now, if we type `ip link`, we will see our only 2 interfaces in the namespaces in DOWN mode:
+
+<img src="/images/07_ipLink.png">
+
+We will change to UP mode:
+
+<img src="/images/08_ipLink.png">
+
+Last step, we will configure the ip address of device `peer0` and `ping` it with 1 ping to check it's connectivity:
+
+<img src="/images/09_ipAddAndPing.png">
+
+(5,6) Creating pid and mnt namespaces:
+
+<img src="/images/10_createPidsnsAndMntns.png">
 
 ### Question (a.1)
-Describe the process hierarchy produced by the sequence of commands in the "child shell" column. <br/>
+Describe the process hierarchy produced by the sequence of commands in the "child shell" column.
+
 ### Answer (a.1)
-In the "child shell", we made a few commands in order to create the several namespaces we wanted to. <br/>
-<ins>(1) USER namespace </ins><br/>
-First, in line 3, we're creating a new usrns, with the command `unshare /bin/bash/`, which moves the bash program to a new namespace (unshares the current ones). <br/>
-In our case, we use the flag `-U`, which means "User", and ment to `unshare` the user namespace. In the same command, we run `--kill-child`, which means that when the `unshare` will terminate, it will have signame be sent to the forked child process. <br/>
-In line 4, we run `echo "my-user-ns" > /proc/$$/comm`, which replaces the comm value, which is the command name associated with the process of the file from "bash" to "my-user-ns". The purpose of changing the `bash`'s COMM to "mu-user-ns" is for the next step at the "parent shell" (line 9), where we will `grep` the process and show that it is still appears authentically in the "parent shell", and without the COMM changing it will be hard to find.<br/>
-Then, we run `id` which represent our, UID, GID and Groups:<br/>
-```
-uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
-```
-The "65534" in the UID, GID and groups, represents the user `nobody`, which means that they have no mapping inside the namespace. The value for user `nobody` is UNIX standard and defined in the file `/proc/sys/kernel/overflowuid`. When we creare USER namespace, the new user has no mapping and that is the cause. <br/><br/>
-<ins>(2,3) UTS and IPC namespaces </ins><br/>. 
-In line 20, we create IPC namespace and UTS namespace in the same command, when we run `unshare --ipc --uts --kill-child /bin/bash`. <br/>
-Using different flags (`--ipc` or `--uts` or `-U`, etc) only indicates which kind of namespace we would like to create by calling the `unshare` command. Same as at the USER namespace, we also use the `--kill-child` flag. <br/>
-After we create the new HOSTNAME namespace (uts), we would like to change its name to "isolated", and we do it by running `hostname isolated`. <br/>
-Next, we run `hostname` just to check that the name of the new UTS namespace has been changed to "isolated". <br/><br/>
-<ins>(4) NET namespace </ins><br/>
-We start as we did in the other namespaces, and create a NET namespace whitin the command `unshare --net --kill-child /bin/bash` (line 26). <br/>
-Then, in line 27 we will change again the COMM value with the command `echo "my-net-ns" > /proc/$$/comm`. We can see the use to `grep` again the process in line 29 (at the parent shell). <br/>
-After we've created (lines 32-36) the virtual network interface pair on (veth0-peer0), turned it on and assigned an IP to the veth0 interface, and put the peer0 interface in the previously created network namespace and keep the other end in the root network namespace, it is time to configure the pair in the "child shell". <br/>
-In line 38, we first check with `ip link` what interfaces do we have in this NET namespace. <br/>
-After we see in lines 39-42 both of the interfaces (loopback and peer0) and that they are down, we run 2 commands in lines 43-44 to bring them to UP mode.
+When running `unshare`, the shell creates a new child application by `fork()`-ing and then `exec()`-ing the `unshare` app.
+When using the `--kill-child` flag, according to the `man` pages, it infers the `--fork` flag:
+> "This option implies --fork""
 
-     43                                  $ ip link set lo up
-     44                                  $ ip link set peer0 up
+So unshare doesn't execute the command we give it, but rather create another child by `fork()`-ing and then runs it.
+Hence, the process hierarchy is going to be:
+child shell > `unshare -U` > `my-user-ns` > `unshare --ipc --uts` > `/bin/bash` > `unshare --net` > `my-net-ns` > `unshare --pid --mount` > `/bin/sh`
 
-Now, all we need to do is to assign an IP to `peer0` inteface with the command `ip addr add 10.11.12.14/24 dev peer0`.<br/>
-And ofcourse, we need to check that we have connection with pinging the address "10.11.12.13" (line 47). <br/>
-We can see that the ping worked :) <br/>
-
-     47                                  $ ping -c 1 10.11.12.13
-     48                                  PING 10.11.12.13 (10.11.12.13) 56(84) bytes of data.
-     49                                  64 bytes from 10.11.12.13: icmp_seq=1 ttl=64 time=0.066 ms
-
-
-<ins>(5,6) PID and MNT namespaces </ins><br/>
-In line 53, we create PID namespace and MNT namespace in the same command. <br/>
-As we know, in Linux there is only 1 process tree, enumerating all of its running processes in the OS from 1 (which is the process `systemd()`) to n processes.
-When creating a Process namespaces (PIDNS), we make nested process trees. <br/>
-We give the processes (other than systemd) the option to be the root process by moving on the top of a subtree. It means that in that tree, the process will get the PID = 1 (such as the `systemd()` in the OS). The other processes' in that nested namespace will receive their number realtively to the nested root process in that subtree. <br/>
-So, in the command in line 53 we used `unshare --pid --mount --fork --kill-child /bin/sh`, which means we moved the current process of `/bin/sh/` to a new set of namespace and actually unshared it from its curret one with the `unshare` syscall.<br/>
-When we used the flag `--pid`, we've set that from now on, children will have a distinct set of PID-to-process mappings from their parent. <br/>
-In order to make it "happen", we had to use the `--fork` flag, which forked the program as a child process of `unshare`rather than running it directly.<br/>
-We also run `--kill-child`, which sends the command to kill the subtree of all processes created under the forked child process, after the `unshare` will be terminated.
-In the same command, we run the flag `--mount`, which was supposed to `unshare` the mounted filesystem and create a new Mount namespace.<br/>
-In line 54, we run the command `mount -t proc proc /proc` <br/> in order to mount the filesystem with the type (flag `-t`) of proc filesystem which is mounted at `/proc`. <br/>
-And finnaly, we run `ps` (line 55) to check which processes are running in our nested subtree. <br/>
+Another way to "verify" that is to look at `pstree -p` that prints out all the processes on the machine in a tree form.
+However, in this scenarion, the chain is too long for the tool, so we can verify using `ps -ef` and jump from child to parent.
 
 ### Question (a.2)
 How can it be minimized, and what would the hierarchy look like?
+
 ### Answer (a.2)
-The hierarchy presented in Answer (a.1) can be minimized by merging some of the commands together, for example: <br/>
-```#!/bin/bash
-        Parent shell                     Child shell
-        -------------------------------  -----------------------------  
-      1                                  # (1) create (privileged) userns
-      2   
-      3                                  $ unshare -U --kill-child /bin/bash
-      4                                  $ echo "my-user-ns" > /proc/$$/comm && id
-      5                                  uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
-      6   
-      7   
-      8   $ ps -e -o pid,comm | grep my-user-ns
-      9  22310,my-user-ns?
-     10   
-     11   $ sudo bash -c 'echo "0 1000 1000" > /proc/22310/uid_map' && sudo bash -c 'echo "0 1000 1000" > /proc/22310/gid_map'
-     12
-     13                                  $ id
-     14                                  uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
-     15                                  
-     16                                  # (2,3,4) create utsns, ipcns and netns
-     17   
-     18                                  $ unshare --ipc --uts --net --kill-child /bin/bash
-     19                                  $ hostname isolated && hostname
-     20                                  isolated  
-     21   
-     22   $ sudo ip link add veth0 type veth peer name peer0 && sudo ip link set veth0 up && sudo ip addr add 10.11.12.13/24 dev veth0
-     23   
-     24   $ sudo ip link set peer0 netns /proc/22331/ns/net
-     25   
-     26                                  $ ip link
-     27                                  1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
-     28                                      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-     29                                  9: peer0@if10: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
-     30                                      link/ether 76:8d:bb:61:1b:f5 brd ff:ff:ff:ff:ff:ff link-netnsid 0
-     31                                  $ ip link set lo up && ip link set peer0 up
-     32                                  $ ip addr add 10.11.12.14/24 dev peer0
-     33                                  $ ping -c 1 10.11.12.13
-     34                                  PING 10.11.12.13 (10.11.12.13) 56(84) bytes of data.
-     35                                  64 bytes from 10.11.12.13: icmp_seq=1 ttl=64 time=0.066 ms
-     36   
-     37                                  # (5,6) create pidns, mntns
-     38                                  $ unshare --pid --mount --fork --kill-child /bin/sh
-     39                                  $ mount -t proc proc /proc
-     40                                  $ ps
-```
+The only namespace that you can change for yourself effectively is the PID one.
+When we call the syscall `unshare(CLONE_NEWPID)`, it only affects the PID namespace for our children:
+> Unshare the PID namespace, so that the calling process has a new PID namespace for its children
+
+So, theoretically, we could run all the unshares in a single command with `--fork-child`, creating a single `unshare` process, with a single `/bin/bash` child:
+`unshare --pid --ipc --uts --net --user --mount --fork-child /bin/bash`
+
+The chain would be: child shell > `unshare` > `bash`.
+
+The problem with this method, is that it requires using `sudo`, because our child shell is not allowed to create new namespaces.
+To work around that, we could first create a new shell in a new user namespace, (without the `--fork-child` to avoid creating an extra process),
+then give it permissions from the parent shell, like we've done before, and finally, run an additional `unshare` command with all the other flags.
+
 ### Question (b)
 What would happen if you change the order of namespace creation, e.g. run `unshare --ipc` first? <br/>
 And what would happen if you defer lines 12-13 until a later time?
+
 ### Answer (b)
-If we change the order of namespace creation, and run any other flag than `-U`, means we would like to create any of the other 6 kinds of namespaces (IPC, NET, UTS, MNT, PID or CGROUP), rather than USER namespace, <br/>we would receive an error of `unshare: unshare failed: Operation not permitted`. <br/>
-Only in case we create USER namespace first, we would be able to create the other namespaces. <br/>
-But, if we create USER namespace first, it won't be the only action we need to take in order to proceed creating the other namespaces - <br/>We also need to run the 2 code lines which appears in lines 12-13:
+If we change the order of namespace creation, and run any other flag than `-U` (USER namespace),
+means we would like to create any of the other 6 kinds of namespaces (IPC, NET, UTS, MNT, PID or CGROUP).
+
+We would receive an error of `unshare: unshare failed: Operation not permitted`, because our child shell is running as an unprivileged user. We could work around that by calling `sudo unshare...`.
+
+But, if we create USER namespace first, and run the 2 code lines which appears in lines 12-13 from the parent shell,
+the child shell will obtain "root" privileges inside the new user namespace, allowing it to run additional `unshare` commands:
 ```
-     12   $ sudo bash -c 'echo "0 1000 1000" > /proc/<pid num>/uid_map'
-     13   $ sudo bash -c 'echo "0 1000 1000" > /proc/<pid num>/gid_map'
+$ sudo bash -c 'echo "0 1000 1000" > /proc/<pid>/uid_map'
+$ sudo bash -c 'echo "0 1000 1000" > /proc/<pid>/gid_map'
  ```
-When a user namespace is being created, it starts without a mapping of user IDs (UID) and group IDs (GID) to the parent user namespace. <br/>
-The mapping details of both UID and GID are located at `/proc/<pid num>/uid_map` and `/proc/<pid num>/gid_map` respectively. <br/>
-When we `cat` the file, what we see is the mapping of UIDs (or GIDs) from the usernamespace of the process pid to the user namespace of the process that opened uid_map (or gid_map). The first two numbers specify the starting user ID in each of the two user namespaces. The third number specifies the length of the mapped range. So, in lines 12-13, we are writing to those mapping files with `echo` and giving the new UID and GID the ditailes of `0 1000 1000`. <br/>
-So, when a user namespace is first created, this file is empty, and without filling it out with mapping detailes, we won't be able to create the other kinds of namespaces, and this is why we **CANNOT** defer lines 12-13, otherwise same error will be received as before (`unshare: unshare failed: Operation not permitted`) <br/>
- 
+
+When a user namespace is being created, it starts without a mapping of user IDs (UID) and group IDs (GID) to the parent user namespace.
+
+The mapping details of both UID and GID are located at `/proc/<pid num>/uid_map` and `/proc/<pid num>/gid_map` respectively.
+
+When we `cat` the file, what we see is the mapping of UIDs (or GIDs) from the usernamespace of the process pid to the user namespace of the process that opened the file.
+The first two numbers specify the starting user ID in each of the two user namespaces.
+The third number specifies the length of the mapped range.
+
+In lines 12-13, we are writing to those mapping files with `echo` the range: `0 1000 1000`.
+Meaning user `1000` (The `vagrant` user from the original namespace) will be mapped to UID `0` inside the new user namespace, aka `root`.
+Thus, the new child shell can now work it's magic.
+
 ### Question (c)
-What is the purpose of line 4 and lines 9-10 (and similarly, line 27 and lines 29-30)? Why are they needed?<br/>
+What is the purpose of line 4 and lines 9-10 (and similarly, line 27 and lines 29-30)? Why are they needed?
+
 ### Answer (c)
-The purpose is to send "signals" to the parent process in order to find which processes are those we are looking for.
-`$$` is a variable and represent the PID.
-As we explained the commands in Answer (a.1), in order to make that happen, we are changing the COMM value in its `/proc/$$/COMM` file, with the command `echo "my-net-ns" > /proc/$$/comm`, and when we get to the "parent shell" we can simply `grep` "my-user-ns" on the results of the `ps` command. <br/>
+The purpose is to help us easily find processes running in nested namespaces from the parent shell.
+`$$` is a variable and represent the PID for the current shell.
+We are changing the comm value by writing to the `/proc/$$/comm` file, with the command `echo "<name>" > /proc/$$/comm`.
+
+When we get to the "parent shell" we can simply `grep -e -o pid,comm <name>` on the results of the `ps` command.
+
+Is it actually necessary? NO. Why? Because up until you `unshare` the pid namespace, both shells are sharing the pid universe.
+If we run `$$` in the child shell at any point before we do that, we'll see the actual pid and are simply able to use it.
+
 ### Question (d.1)
-Describe how to undo and cleanup the commands above. (Note: there is more than one way; try to find the minimal way). <br/>
+Describe how to undo and cleanup the commands above. (Note: there is more than one way; try to find the minimal way).
 Make sure there are no resources left dangling around.
+
 ### Answer (d.1)
-The minimal and simpliest way is just to run `exit` in both shells. <br/>
-The only thing that can be left dangling around is the network configurations in the "parent shell", and those can be undo by just running `ip link delete dev veth0` in the "parent shell". <br/>
-Of course, we should undo first the network configuration and then `exit` from all the shells. <br/><br/>
+The minimal and simpliest way is just to `exit` in both shells.
+Since we are using the `--kill-child` flag, when the topmost `unshare` dies, it sends a signal to all it's children, effectively killing them.
+
+The only thing that can be left dangling around is the network configurations in the "parent shell".
+Those can be undo by just running `ip link delete dev veth0` in the "parent shell".
+
+Of course, we should undo first the network configuration and then `exit` from all the shells.
+
 ### Question (d.2)
 Write a program that would implement the sequence above, whose usage is:
 
@@ -404,9 +383,17 @@ For example, the command:
     isolate ps aux
 
 would execute the command "ps aux" inside an isolated environment.
+
 ### Answer (d.2)
-Implemented. See code at [isolate.c](/isolate.c).
+
 ### Question (e)
 Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
+
 ### Answer (e)
-?
+Yes it does, for the same reasons we've discussed in (b).
+It cannot create namespaces without specific permissions to do so.
+
+There are some ways around that:
+1. Run that as root, like stated above
+1. Use the setuid bit, change the ownership of the binary file to `root` with the `setuid` bit set, this way, the binary will always start with enough capabilities to create the isolated sandbox.
+1. Use linux capabilities instead of `root`, giving it more granular permissions by `CAP_SYS_ADMIN` or `CAP_SYS_SETUID`.
