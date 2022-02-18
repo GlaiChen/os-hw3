@@ -44,15 +44,16 @@ Execution in the guest context continues, with everything taken care of by the h
     (b). In the <a href="https://www.usenix.org/legacy/events/osdi10/tech/full_papers/Ben-Yehuda.pdf">Turtles Project</a>, nested virtalization uses "EPT compression" to optimize memory virtualization. To some extent, this technique reminds of the optimization used in the L3 µ-kernel to reduce TLB flushed.<br/>
     The common theme to both is that the µ-kernel is using segments and tags in order not to do TLB flush and delete all of the table, and with the segments and tags it still can access the addresses it needs. The Turtles Project, are trying to reduce the complexity of the translation of the TLB misses, with taking 3 levels of logics inside one table ("EPT compprettion") and with that we can step over and access directly from L2 address to L0 address.<br/>
     
- 4. The article about The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm Project</a>, describes techniques that can be used by a VMM to independently overcome part of the “semantic gap” separating it from the guest operating systems it supports and enable the VMM to track the existence and activities of operating system processes. The Antfarm Project is an implementation of these techniques that works without detailed knowledge of a guest’s internal architecture or implementation. <br/>
+ 4. The article about The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm Project</a>, describes techniques that can be used by a VMM to independently overcome part of the “semantic gap” separating it from the guest operating systems it supports and enable the VMM to track the existence and activities of operating system processes. The Antfarm Project is an implementation of these techniques that works without detailed knowledge of a guest’s internal architecture or implementation. <br/> Moreover, the techniques that has been descriped in the article are based on the observations that a VMM can make of the interactions
+between a guest OS and virtual hardware. The Antfram monitors how a guest uses a virtual MMU to
+implement virtual address spaces.
  As it mention in the given question, the Antfarm Project relies on shadow page-tables for introspection, to learn about processes inside the guest. Also mentioned that it was built before the introduction of EPT/NPT. <br/>
-
-(4) The Antfarm project relied on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. How would the use of EPT affect the techniques describes in the paper? What changes (if any) would you propose to adapt their system to EPT, and how would such changes affect its performance?
-
-In the ar
-Proccess Created - 
-
-<hr>
+* Question - <ins>How would the use of EPT affect the techniques describes in the
+paper? What changes (if any) would you propose to adapt their system to EPT,
+and how would such changes affect its performance? </ins></br>
+The use of the EPT affect the techniques described in the paper in several ways.
+First, at the `process creation`, we can see that a page directory is in use when its physical address resides in a processor control register which called CR3. When using shadow page-tables, as the guest will try to change it, that's when it'll get fault. That is, unlike when using EPT/NPT -  where the guest will get fault only if it try to acesss a page which won't be at the TLB. In that scenario, the Antfarm Project will perform better than the EPT/NPT. <br/>
+Moreover, at the `process exit`, when the CR3 value drops to zero and the TLB flushes on all processors (helps the VMM detect where the address deallocation has been occured) or haven't been active for a long time, the VMM will consider the corresponding address space dead and its entry in the ASID register can be removed. However, in EPT/NPT, if we don't see an address space for relative long time, we can assume that the process that reside in that address space is also have been exited. In that situation, the EPT/NPT will perform better than the Antfarm Project. <br/>
 
 # Group programming
 Made in collaboration with Daniel Trugman
