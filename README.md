@@ -28,15 +28,24 @@ Execution in the guest context continues, with everything taken care of by the h
    So once the guest ran out of memory as we mention, and the kernel of the guest will handle the page table entry (PTE), and swapps it inside the guest, and since he knows only the guests' PTE, it won't have any affect on the host at all. <br/> However, the guest will keep getting page faults as long it won't be solved by the host with an active action. <br/>
   
    (b) In the second hand, when the host is the one who runs out of they memory, and swaps out pages that are used by the hypervisor it's a different situation. If it ran out of memory at the hosts, it will receive page faults at the guest-userspace because the pages doesn't exists.<br/>
-   In that situation, it will be recognised as "missing" at the PTE, and will move to the hosts' KVM in order to handle the pages and reload them at the IPT. After it's done, it should solve the page-fault situation and back to the guest-userspace by the `vmentry`. <br/>
-   In all of that process, the guest won't understand that something happend, since the host handled the situation. <br/>
+   In that situation, it will be recognised as "missing" at the PTE, and will move to the hosts' KVM in order to handle the pages and reload them at the PT. After it's done, it should solve the page-fault situation and back to the guest-userspace by the `vmentry`. <br/>
+   In all of that process, the guest won't understand that something happend, since the host handled the situation, the only affect is a small delay because it took time for the host to get the page. <br/>
    
-3. One difference between plain virtualization and nested virtualization is that the former can leverage EPT/NPT hardware extensions, while the latter cannot do so directly <br/>
-   (a). <br/>
-    **To be Continued...**<br/>
-   (b). <br/>
-    **To be Continued...**<br/>
- 4. The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm project</a> relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
+3. One difference between plain virtualization and nested virtualization is that the former can leverage EPT/NPT hardware extensions, while the latter cannot do so directly. <br/><br/>
+   (a). We've been asked, what are the pros and cons of adding another EPT/NPT layer for nested virtualization?<br/>
+    <ins>Pros:</ins>
+    * Both EPT and NPT are good with handling the `vmexit` because we save a bigger and complex table with indications for every step, and we can handle the whole situation inside the guest without exisiting each time to the KVM.
+ 
+    <br/><ins>Cons:</ins>
+    * There are too many accesses in each time we have TLB missing, and each time we need to handle the guest page-host page and it takees a lot of time.
+    * Since we don't have EPT inside the nested virtualisation, more `vmexit` applications are occuring - the host canot handle of all faults of guest on its own effort.
+    * A lot of registers and hardware support are needed in order to update our VMM.
+     <br/>
+    (b). In the <a href="https://www.usenix.org/legacy/events/osdi10/tech/full_papers/Ben-Yehuda.pdf">Turtles Project</a>, nested virtalization uses "EPT compression" to optimize memory virtualization. To some extent, this technique reminds of the optimization used in the L3 µ-kernel to reduce TLB flushed.<br/>
+    The common theme to both is that the µ-kernel is using segments and tags in order not to do TLB flush and delete all of the table, and with the segments and tags it still can access the addresses it needs. The Turtles Project, <br/>
+    
+    
+ 4. The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm Project</a> relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
  **To be Continued...**<br/>
 
 <hr>
