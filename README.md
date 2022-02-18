@@ -23,11 +23,10 @@ Once in the guest context, the BIOS start to run. As long as there's no traps, e
 Once `#vmexit` occurred, we moved out from the guest mode (non root) to the hypervisor (root mode).
 For this "movement" to occur, one of the "exit conditions" has to be applied, which can be due to a trap, a fault or an abort, such as dividing by zero, page faults, etc.
 In that situation, the hypervisor, according to the specific "exit condition" that has been occurred, applying an "handler". For "exit condition" from the type fault, there's an fault handler, and for a trap, there's an trap handler and so for abort.
-The "exit condition" is the full desc ????
 Inside the "handler", it takes the command that located inside the memory address (in binary) and fetches it. If it didn't get the page fault or the genereal protection
 Next thing, it decodes it in order to understand what exactly was the problem and what was the instruction. 
-After that, it checks if it the process who tried to run the command had the right privilieges to make it, and if it does, it reads it from the memory, and after all that process it emulates it.
-If it receives a trap again (because of dividing by zero, etc), it goes back to the guest by `vmentry`. If now, it writes it on the memory. If
+After that, it checks if it the process who tried to run the command had the right privilieges to make it, and if it does, it reads it from the memory. In all of those step, a fault can happen again, such as #GP,#PF, #UD, etc, and if it does, it goes back to `vmentry`. If it did passed without any fault, all that process goes to the step of emulation.
+If it receives a trap again (because of non recoverable "exit conditions", such as dividing by zero, etc), it goes back to the guest by `vmentry`. If at the stage of writing to memrory an #GP/#PF occur again, it also goes back to `vmentry`. If emulate succeed, and it's been written to memory, now it updates the registers including %rip, and then it goes back to the `vmentry`.
 2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests: <br/>
    (a) If the guest runs out of memory and starts swapping, the guest would like to call the disk. In that case, the hypervisor will receive that call, execute it and receive the answer. When it will be received, the hypervisor will move it back to the guest and the memory would be swaped. <br/>
    **To be Continued...** <br/>
