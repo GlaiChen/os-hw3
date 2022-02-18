@@ -21,14 +21,11 @@ Once in the guest context, the BIOS start to run. As long as there's no traps, e
 (1.2) The second mmechanism as despicted in slide 27: <br/>
 <img src="/images/slide_27.jpg"> <br/><br/>
 Once #vmexit occurs - for any reason that triggers it (the different exit conditions: dividing by zero, page faults, etc...), we move from the guest context to the hypervisor one.  <br/>
-
-Once the hypervisor receives control, he applies the handler that corresponds to the relevant exit condition. Simple cases are done by the KVM without much hassle. Other cases require the KVM to fetch the command that triggered the trap, decode it, determine if the user has the right privileges, and perform the required steps to execute that instruction (read mem, write memory, update registers). In all of these steps, a fault may occur (GPF/PF while fetching, #UD while decoding, etc...) in which case the emulation will not occur successfully and the hypervisor will reflect that to the guest. Finally, it updates the %rip register (basically skipping the aforementioned instruction), and returns control back to the guest. <br/>
+ Once the hypervisor receives control, he applies the handler that corresponds to the relevant exit condition. Simple cases are done by the KVM without much hassle. Other cases require the KVM to fetch the command that triggered the trap, decode it, determine if the user has the right privileges, and perform the required steps to execute that instruction (read mem, write memory, update registers). In all of these steps, a fault may occur (GPF/PF while fetching, #UD while decoding, etc...) in which case the emulation will not occur successfully and the hypervisor will reflect that to the guest. Finally, it updates the %rip register (basically skipping the aforementioned instruction), and returns control back to the guest. <br/>
 Execution in the guest context continues, with everything taken care of by the hypervisor. If the instruction was authorized - it was executed by the hypervisor. If not, the instruction was not executed and the guest was notified. This is the 'essence' of the virtualization method, allowing for improved security etc...<br/>
 2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests: <br/>
    (a) If the guest runs out of memory and starts swapping, it will try swaping memory in its own filessystem, since he doesn't know it runs on a virtual filessystem and a virtual memory, it treats it like it is a physical memory and has its own paging. <br/>
-   When the guest will try to reach to the certain memory page, it will receive a page fault. <br/>
-   
-   Since the guest treated it by himself, during all of that process the host won't notice or take actions at all - it won't be affected.
+   So once the guest ran out of memory as we mention, and the kernel of the guest will handle the page table entry (PTE), and swapps it inside the guest, and since he knows only the guests' PTE, it won't have any affect on the host at all. <br/> However, the guest will keep getting page faults as long it won't be solved by the host with an active action.
   
    (b) When the host runs out of they memory, and swaps out pages that are used by the hypervisor, <br/>
    **To be Continued...** <br/>
