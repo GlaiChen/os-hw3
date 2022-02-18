@@ -10,7 +10,7 @@ The group part will also appear at our group repo at the following link: <br/>ht
 ## Invidual Part - Kernel Virtual Machine
 In several lectures in the course, we have learned about virtualization from most of its aspects. <br/>
 1. In Lecture #9, we've been shown by Dr. Laadan 2 mechanisms (you can find it [here](https://github.com/GlaiChen/os-hw3/blob/main/AOS-2022-L09.pdf), at slides 26 && 27). <br/>
-(1.1) The first mechanism is of KVM as despicted in slide 26: <br/>
+(1.1) The first mechanism as despicted in slide 26: <br/>
 <img src="/images/slide_26.jpg"> <br/><br/>
 First, it is Type II hypervisor,means it is a hosted hypervisor, which support guest virtual machines by coordinating calls for CPU, memory and other resources through the host's resources. In simple words -type II runs on top of an OS. <br/>
 In our case study, the KVM has been written as linux kernel module and for linux and Intel VT-x purpose and relies on QEMU. <br/>
@@ -18,11 +18,16 @@ They actually virtualized only the CPU and/or MMU, and all of the rest of resour
 In fact, the architecture of that mechanism is based on 3 layers - User mode, Kernel mode and Non root, which is the guest. Both User and Kernel modes are rooted.
 First thing first, the user mode process (QEMU) start with ending a syscall to the kernel module, which initate the guest enviorment (allocates memory, loads the BIOS, creates a device, etc),  and then eneters the guest context. <br/>
 Once in the guest context, the BIOS start to run. As long as there's no traps, everything continues within the guest context. Once a trap occurs, the kernel module receives it. If it is something that the kernel "knows" how to handle by itself - it simply does that, and returns control back to the guest. Otherwise, the kernel module needs the QEMU's help. In that case, he returns the syscall to the user-root process with the return value holding all the information relevant for the qemu's work. The QEMU then does whatever he needs to do, and stores all the relevant data. It then triggers again the syscall, after completing everything it needed to do, and sending all relevant data. The Kernel module takes the QEMU's data (alongside with possibly things that it also needed to do) and gives back control to the guest. Basically, in this point the Kernel module and the QEMU did everything they were required by the non-root's trap (BIOS trap). This procedure carries on throughout all the guest execution time. <br/><br/>
-(1.2) The second mechanism is of KVM as despicted in slide 27: <br/>
+(1.2) The second mmechanism as despicted in slide 27: <br/>
 <img src="/images/slide_27.jpg"> <br/><br/>
-Once VMEXIT# occurred, we moved out from the guest mode (non root) to the hypervisor.
-For this "movement" to occur, it has to be applied one of the "exit conditions", which can be due to vary options and errors, such as dividing by zero, page faults, etc.
-In that situation, the hypervisor, according to the specific "exit condition" that has been occurred, send it to an other handler.
+Once `#vmexit` occurred, we moved out from the guest mode (non root) to the hypervisor (root mode).
+For this "movement" to occur, one of the "exit conditions" has to be applied, which can be due to a trap, a fault or an abort, such as dividing by zero, page faults, etc.
+In that situation, the hypervisor, according to the specific "exit condition" that has been occurred, applying an "handler". For "exit condition" from the type fault, there's an fault handler, and for a trap, there's an trap handler and so for abort.
+The "exit condition" is the full desc ????
+Inside the "handler", it takes the command that located inside the memory address (in binary) and fetches it. If it didn't get the page fault or the genereal protection
+Next thing, it decodes it in order to understand what exactly was the problem and what was the instruction. 
+After that, it checks if it the process who tried to run the command had the right privilieges to make it, and if it does, it reads it from the memory, and after all that process it emulates it.
+If it receives a trap again (because of dividing by zero, etc), it goes back to the guest by `vmentry`. If now, it writes it on the memory. If
 2. When the OS runs out of memory it resorts to swapping pages to storage. Considering a system with QEMU/KVM hypervisor running several guests: <br/>
    (a) If the guest runs out of memory and starts swapping, the guest would like to call the disk. In that case, the hypervisor will receive that call, execute it and receive the answer. When it will be received, the hypervisor will move it back to the guest and the memory would be swaped. <br/>
    **To be Continued...** <br/>
