@@ -37,13 +37,12 @@ Execution in the guest context continues, with everything taken care of by the h
     * Both EPT and NPT are good with handling the `vmexit` because we save a bigger and complex table with indications for every step, and we can handle the whole situation inside the guest without exisiting each time to the KVM.
  
     <br/><ins>Cons:</ins>
-    * There are too many accesses in each time we have TLB missing, and each time we need to handle the guest page-host page and it takees a lot of time.
+    * There are too many accesses in each time we have TLB misses, and each time we need to handle the guest page-host page and it takees a lot of time.
     * Since we don't have EPT inside the nested virtualisation, more `vmexit` applications are occuring - the host canot handle of all faults of guest on its own effort.
     * A lot of registers and hardware support are needed in order to update our VMM.
      <br/>
     (b). In the <a href="https://www.usenix.org/legacy/events/osdi10/tech/full_papers/Ben-Yehuda.pdf">Turtles Project</a>, nested virtalization uses "EPT compression" to optimize memory virtualization. To some extent, this technique reminds of the optimization used in the L3 µ-kernel to reduce TLB flushed.<br/>
-    The common theme to both is that the µ-kernel is using segments and tags in order not to do TLB flush and delete all of the table, and with the segments and tags it still can access the addresses it needs. The Turtles Project, <br/>
-    
+    The common theme to both is that the µ-kernel is using segments and tags in order not to do TLB flush and delete all of the table, and with the segments and tags it still can access the addresses it needs. The Turtles Project, are trying to reduce the complexity of the translation of the TLB misses, with taking 3 levels of logics inside one table ("EPT compprettion") and with that we can step over and access directly from L2 address to L0 address.<br/>
     
  4. The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm Project</a> relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
  **To be Continued...**<br/>
