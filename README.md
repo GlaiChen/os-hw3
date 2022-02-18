@@ -44,8 +44,13 @@ Execution in the guest context continues, with everything taken care of by the h
     (b). In the <a href="https://www.usenix.org/legacy/events/osdi10/tech/full_papers/Ben-Yehuda.pdf">Turtles Project</a>, nested virtalization uses "EPT compression" to optimize memory virtualization. To some extent, this technique reminds of the optimization used in the L3 µ-kernel to reduce TLB flushed.<br/>
     The common theme to both is that the µ-kernel is using segments and tags in order not to do TLB flush and delete all of the table, and with the segments and tags it still can access the addresses it needs. The Turtles Project, are trying to reduce the complexity of the translation of the TLB misses, with taking 3 levels of logics inside one table ("EPT compprettion") and with that we can step over and access directly from L2 address to L0 address.<br/>
     
- 4. The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm Project</a> relies on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. <br/>
- **To be Continued...**<br/>
+ 4. The article about The <a href="https://research.cs.wisc.edu/wind/Publications/antfarm-usenix06.pdf">Antfarm Project</a>, describes techniques that can be used by a VMM to independently overcome part of the “semantic gap” separating it from the guest operating systems it supports and enable the VMM to track the existence and activities of operating system processes. The Antfarm Project is an implementation of these techniques that works without detailed knowledge of a guest’s internal architecture or implementation. <br/>
+ As it mention in the given question, the Antfarm Project relies on shadow page-tables for introspection, to learn about processes inside the guest. Also mentioned that it was built before the introduction of EPT/NPT. <br/>
+
+(4) The Antfarm project relied on shadow page-tables for introspection, to learn about processes inside the guest. It was built before the introduction of EPT/NPT. How would the use of EPT affect the techniques describes in the paper? What changes (if any) would you propose to adapt their system to EPT, and how would such changes affect its performance?
+
+In the ar
+Proccess Created - 
 
 <hr>
 
