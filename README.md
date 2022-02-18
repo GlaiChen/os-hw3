@@ -27,8 +27,10 @@ Execution in the guest context continues, with everything taken care of by the h
    (a) If the guest runs out of memory and starts swapping, it will try swaping memory in its own filessystem, since he doesn't know it runs on a virtual filessystem and a virtual memory, it treats it like it is a physical memory and has its own paging. <br/>
    So once the guest ran out of memory as we mention, and the kernel of the guest will handle the page table entry (PTE), and swapps it inside the guest, and since he knows only the guests' PTE, it won't have any affect on the host at all. <br/> However, the guest will keep getting page faults as long it won't be solved by the host with an active action.
   
-   (b) When the host runs out of they memory, and swaps out pages that are used by the hypervisor, <br/>
-   **To be Continued...** <br/>
+   (b) In the second hand, when the host is the one who runs out of they memory, and swaps out pages that are used by the hypervisor it's a different situation. If it ran out of memory at the hosts, it will receive page faults at the guest-userspace because the pages doesn't exists.<br/>
+   In that situation, it will be recognised as "missing" at the PTE, and will move to the hosts' KVM in order to handle the pages and reload them at the IPT. After it's done, it should solve the page-fault situation and back to the guest-userspace by the `vmentry`. <br/>
+   In all of that process, the guest won't understand that something happend, since the host handled the situation.
+   
 3. One difference between plain virtualization and nested virtualization is that the former can leverage EPT/NPT hardware extensions, while the latter cannot do so directly <br/>
    (a). <br/>
     **To be Continued...**<br/>
