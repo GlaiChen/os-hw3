@@ -402,6 +402,12 @@ For example, the command:
 would execute the command "ps aux" inside an isolated environment.
 
 ### Answer (d.2)
+See `isolate.c` - [link](/isolated.c).
+
+Compile using `gcc isolate.c -o isolate`.
+
+Execution example: `./isolate /bin/ps /proc`
+
 
 ### Question (e)
 Test your program. Does it require root privileges? If so, then why? How can it be changed to not require these privileges?
