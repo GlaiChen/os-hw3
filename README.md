@@ -402,7 +402,7 @@ For example, the command:
 would execute the command "ps aux" inside an isolated environment.
 
 ### Answer (d.2)
-See `isolate.c` - [link](/main/isolated.c).
+See `isolate.c` - [link](https://github.com/GlaiChen/os-hw3/blob/main/isolate.c).
 
 Compile using `gcc isolate.c -o isolate`.
 
